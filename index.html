@@ -1,0 +1,128 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.11/esri/themes/dark/main.css"
+    />
+
+    <script src="https://js.arcgis.com/4.11/"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ArcGIS JavaScript Tutorials: Create a Starter App</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.11/esri/css/main.css"
+    />
+    <script src="https://js.arcgis.com/4.11/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/widgets/Search",
+        "esri/widgets/Locate",
+        "esri/widgets/Track",
+        "esri/Graphic",
+        "esri/widgets/Compass"
+      ], function(Map, MapView, Search, Locate, Track, Graphic, Compass) {
+        var map = new Map({
+          basemap: "streets-navigation-vector"
+        });
+
+        var view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-97.7431, 30.2672], //austin coordinates
+          zoom: 13
+        });
+
+        // var locate = new Locate({
+        //    view: view,
+        //   useHeadingEnabled: false,
+        //  goToOverride: function(view, options) {
+        //  options.target.scale = 1500; //override default map scale
+        //  return view.goTo(options.target);  }
+        //   });
+        //  view.ui.add(locate, "top-left")   //add widget to top left of view
+
+        var track = new Track({
+          view: view,
+          graphic: new Graphic({
+            symbol: {
+              type: "simple-marker",
+              size: "12px",
+              color: "green",
+              outline: {
+                color: "#efefef",
+                width: "1.5px"
+              }
+            }
+          }),
+          useHeadingEnabled: false //keep orientation of map
+        });
+
+        view.ui.add(track, "top-left");
+
+        var compass = new Compass({
+          view: view
+        });
+
+        view.ui.add(compass, "top-right"); // add compass to top right
+
+        //search widget
+        var search = new Search({
+          view: view
+        });
+
+        view.ui.add(search, "bottom-left"); // add geocoder to bottom left
+
+        //event to find address on map using reverse geocoder
+        view.on("click", function(evt) {
+          search.clear();
+          view.popup.clear();
+          if (search.activeSource) {
+            var geocoder = search.activeSource.locator; // World geocode service
+            geocoder.locationToAddress(evt.mapPoint).then(
+              function(response) {
+                //show address found
+                var address = response.address;
+                showPopup(address, evt.mapPoint);
+              },
+              function(err) {
+                // error for no address found
+                showPopup("No similar address found!", evt.mapPoint);
+              }
+            );
+          }
+        });
+
+        function showPopup(address, pt) {
+          view.popup.open({
+            title:
+              +Math.round(pt.longitude * 100000) / 100000 +
+              "," +
+              Math.round(pt.latitude * 100000) / 100000,
+            content: address,
+            location: pt
+          });
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
